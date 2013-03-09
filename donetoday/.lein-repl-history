@@ -1,0 +1,51 @@
+(def test '("alpha" "bravo" "charlie"))
+test
+(fist test)
+(first test)
+test
+(symbol (first test))
+ [:add #{ (symbol (first test)) }]
+ [:add #{ (first test) }]
+ [:add #{ (symbol (first test)) }]
+ #{ (symbol (first test)) }
+ #{  (set test) }
+   (set test)
+{done #{Added update to donetoday newvalue test 1st run at idone replacement}, date 20130309, user nmcfarl}
+{:done #{"Added update to donetoday" "newvalue" "test" "1st run at idone replacement"}, :date 20130309, :user "nmcfarl"}
+({:done #{"Added update to donetoday" "newvalue" "test" "1st run at idone replacement"}, :date 20130309, :user "nmcfarl"} :done)
+ (update-item  aws-credential "donetoday"  [(config :user) (dyndb-today)] {"done" [:add (set test) ]}  :return-values "ALL_NEW")
+{"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} 
+(set {"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} )
+(hash {"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} )
+(hash-map {"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} )
+(list {"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} )
+(vec {"done" #{"bravo" "Added update to donetoday" "newvalue" "test" "charlie" "1st run at idone replacement" "alpha"}, "date" 20130309, "user" "nmcfarl"} )
+(apply hash-map (.split "a 1 b 2 c 3" " "))
+5
+{"a" "1", "b" "2", "c" "3"}
+(apply hash-map (.split "a 1 b 2 c 3" " "))
+((apply hash-map (.split "a 1 b 2 c 3" " ")) :a)
+((apply hash-map (.split "a 1 b 2 c 3" " ")) "a")
+(list (apply hash-map (.split "a 1 b 2 c 3" " ")) )
+#{bravo Added update to donetoday newvalue test charlie 1st run at idone replacement alpha}
+#{"a" "1", "b" "2", "c" "3"}
+(list #{"a" "1", "b" "2", "c" "3"})
+(lazy-seq #{"a" "1", "b" "2", "c" "3"})
+(print (lazy-seq #{"a" "1", "b" "2", "c" "3"})
+)
+(print (map (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+)
+(print ((prn-str (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+)
+(print (prn-str (lazy-seq #{"a" "1", "b" "2", "c" "3"})))
+(print (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(prn-str (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(println-str (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map print (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map println (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map println-str (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map printstr (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map println-str (lazy-seq #{"a" "1", "b" "2", "c" "3"}))
+(map println-str (seq "I did this today:" (lazy-seq #{"a" "1", "b" "2", "c" "3"})))
+(map println-str (lazy-seq "I did this today:" (lazy-seq #{"a" "1", "b" "2", "c" "3"})))
+(map println-str (lazy-seq "I did this today:"#{"a" "1", "b" "2", "c" "3"}))
