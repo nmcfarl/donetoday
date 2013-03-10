@@ -1,30 +1,33 @@
 (ns donetoday.core
   (:gen-class)
   )
-(use 'rotary.client)
 (require '[clj-yaml.core :as yaml])
-(use '[clojure.tools.cli :only [cli]])
+(require '[clojure.pprint :as pprint])
 (require '[clj-time.core :as time] )
 (use 'clj-time.format)
 (use 'clj-time.local)
-(require '[clojure.pprint :as pprint])
+(use 'rotary.client)
+(use '[clojure.tools.cli :only [cli]])
 
 
+(def dynamodb-formatter (formatter "yyyyMMdd"))
+(def display-formatter (formatter "yyyy-MM-dd"))
+
+;;  Read the config file
 (defn- user-prop
   "Returns the system property for user.<key>"
   [key]
   (System/getProperty (str "user." key)))
 
-
 (def config  (yaml/parse-string
-            (slurp
-             (str  (user-prop "home") "/.donetoday"))))
+              (slurp
+               (str  (user-prop "home") "/.donetoday"))))
 
 
 (def aws-credential (select-keys config [:secret-key :access-key]))
-(def dynamodb-formatter (formatter "yyyyMMdd"))
-(def display-formatter (formatter "yyyy-MM-dd"))
 
+
+;; date manipulation
 (defn truncate-time [dt]
    (time/to-time-zone
    (apply time/date-time
@@ -32,19 +35,26 @@
                [time/year time/month time/day]))
    (time/default-time-zone)))
 
+(defn- dyndb-today []  (Integer. (unparse dynamodb-formatter (truncate-time (local-now)))))
+(defn- display-lastmonth [] (unparse display-formatter
+                                     (truncate-time
+                                      (time/minus (local-now) (time/months 1)))))
+(defn- stringdate-to-integer [date] (if date (Integer. (apply str (filter #(Character/isDigit %) date))) nil))
 
 
-(defn dyndb-today []  (Integer. (unparse dynamodb-formatter (truncate-time (local-now)))))
-(defn stringdate-to-int [date] (if date (Integer. (apply str (filter #(Character/isDigit %) date))) nil))
 
-(defn view-day [view-date]  
+
+;; actaul functionality
+
+(defn- view-day [view-date]  
   (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" view-date
                     (sort
                      (lazy-seq
-                      ((get-item aws-credential "donetoday" [(config :user) (stringdate-to-int view-date)])
+                      ((get-item aws-credential "donetoday" [(config :user) (stringdate-to-integer view-date)])
                        "done")))))
 
-(defn add-to-done-today [thingsdone date]
+
+(defn- add-to-done-today [thingsdone date]
   (when-not (first thingsdone)
     (do (println "Things done required when not using --view")
         (System/exit 0)))
@@ -57,13 +67,13 @@
                        "done")))))
 
 
+
+
 (defn -main  [& args]
   "Record and view done things"
   (let [[options thingsdone banner] (cli args
                                          ["-v" "--view" "View things done" :flag true]
-                                         ["-d" "--date" "The date you wish to view" :default (unparse display-formatter
-                                                                                                      (truncate-time
-                                                                                                       (time/minus (local-now) (time/months 1))))]
+                                         ["-d" "--date" "The date you wish to view" :default (display-lastmonth)]
                                          ["-h" "--help" "Show help" :default false :flag true]
                                          )]
     (when (or (:help options) (not (or  (:view options) (first thingsdone))))
@@ -74,7 +84,7 @@
     (if (first thingsdone)
       (add-to-done-today  thingsdone (or
                                       (if (:view options)
-                                        (stringdate-to-int (:date options)))
+                                        (stringdate-to-integer (:date options)))
                                       (dyndb-today)  )))))
   
 
