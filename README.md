@@ -10,22 +10,30 @@ And of course add what you are doing today as you go.
 
 ### Config 
 
-This sucker is build on DynamoDB so you'll need an AWS account, with DynamoDB enabled.  And a table added called "donetoday", 2 part key "user" string, "date" number (range).  Sorry - someday I'll build this bootstrapping step into the code.
+#### DynamoDB Bootstrapping
+This sucker is build on DynamoDB so you'll need an AWS account, with DynamoDB enabled.   Then go to https://console.aws.amazon.com/dynamodb/ and 
 
-#### ~/.donetoday
+1. Add a table added called "donetoday", with a 2 part key 
+2. Add a Primary Hash Key:  "user" (type: String)
+3. Add a Primary Range Key: "date" (type: Number)
+
+And you are good to go.  Sorry about the muck - someday I'll build this bootstrapping step into the code.
+
+####  Add a ~/.donetoday yaml file like this:
+```yaml
 secret-key: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 access-key: xxxxxxxxxxxxxxxxxxxx
 user: myuniquehandle   # required, but really needed in multi user environments
-
+```
 
 ## Usage
-
+<pre>
  Switches               Default     Desc
  --------               -------     ----
  -v, --no-view, --view  false       View things done
  -d, --date             2013-02-09  The date you wish to view
  -h, --no-help, --help  false       Show help
-
+</pre>
 
 ### Command line
 
