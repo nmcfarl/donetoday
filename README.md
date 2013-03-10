@@ -1,6 +1,6 @@
 # donetoday
 
-A simple to-done list UI, with support for adding things done toady and viewing past days.  
+A simple to-done list UI, with support for adding things done today and viewing past days.  
 
 Suggested usage is to add a cronjob (don't forget to have the `MAILTO=postmaster@example.com` set at the top of your crontab), so you can see what you where doing last month.  
 
