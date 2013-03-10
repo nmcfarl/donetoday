@@ -18,7 +18,7 @@
 
 (def config  (yaml/parse-string
             (slurp
-             (str  (user-prop "home") "/.aws.yaml"))))
+             (str  (user-prop "home") "/.donetoday"))))
 
 
 (def aws-credential (select-keys config [:secret-key :access-key]))
