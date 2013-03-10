@@ -1,6 +1,5 @@
 (defproject donetoday "0.1.0-SNAPSHOT"
-  :description "Simple list of things done"
-  :url "http://example.com/FIXME"
+  :description "Simple to-done list UI, with support for adding things done toady and viewing past days"
   :main donetoday.core
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
