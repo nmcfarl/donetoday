@@ -84,7 +84,7 @@
   (pprint/cl-format true "I did this today: ~%~%~{* ~A~%~}~%"
                     (sort
                      (lazy-seq
-                      ((add-or-update-column tableinfo  {"user" (config :user) "date" date "done" thingsdone} columnname) columnname)))))
+                      ((add-or-update-column tableinfo  {"user" (config :user) "date" date columnname thingsdone} columnname) columnname)))))
 
 
 
