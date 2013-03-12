@@ -40,7 +40,10 @@ user: myuniquehandle   # required, but really needed in multi user environments
 ```bash
 > function donetoday {
   # obviously you'll need to alter the path to this repo
-    bash -c "cd ~/repos/donetoday/; lein run -- $*"
+  PWD=`pwd` 
+  builtin cd ~/repos/donetoday/;   
+  JAVA_HOME=java lein run   -- $*
+  builtin cd $PWD
 }
 
 > function donetoday{
