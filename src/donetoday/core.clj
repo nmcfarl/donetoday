@@ -9,17 +9,19 @@
 (use 'rotary.client)
 (use '[clojure.tools.cli :only [cli]])
 
-
+; constants
 (def dynamodb-formatter (formatter "yyyyMMdd"))
 (def display-formatter (formatter "yyyy-MM-dd"))
+(def tableinfo {:table "donetoday"   :type :hashandrange, :hash "user", :range "date" })
 
 ;;  Read the config file
 (defn- user-prop
-  "Returns the system property for user.<key>"
+  "Returns the system property for user. <key>"
   [key]
   (System/getProperty (str "user." key)))
 
-(def config  (yaml/parse-string
+(def config
+  (yaml/parse-string
               (slurp
                (str  (user-prop "home") "/.donetoday"))))
 
@@ -28,7 +30,9 @@
 
 
 ;; date manipulation
-(defn truncate-time [dt]
+(defn truncate-time 
+  "Trunctate a time to the date"
+  [dt]
    (time/to-time-zone
    (apply time/date-time
           (map #(% dt)
@@ -42,22 +46,11 @@
 (defn- stringdate-to-integer [date] (if date (Integer. (apply str (filter #(Character/isDigit %) date))) nil))
 
 
+;;DynamoDB stuff
 
-
-;; actaul functionality
-
-(defn- view-day [view-date]  
-  (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" view-date
-                    (sort
-                     (lazy-seq
-                      ((get-item aws-credential "donetoday" [(config :user) (stringdate-to-integer view-date)])
-                       "done")))))
-
-
-
-(def tableinfo {:table "donetoday"   :type :hashandrange, :hash "user", :range "date" })
-
-(defn key-from-tableinfo-data [tableinfo data]
+(defn key-from-tableinfo-data
+  "Extract information about the key for this table, from our table info structure"
+  [tableinfo data]
   (if (= (:type tableinfo) :hash)
     [(data (:hash tableinfo))]
     (if (= (:type tableinfo) :hashandrange)
@@ -65,7 +58,9 @@
 
 
 
-(defn add-or-update-column [tableinfo data columnname]
+(defn add-or-update-column 
+  "Add an a item to column in DynamoDB"
+  [tableinfo data columnname]
   (let [[table key toadd] (list (:table tableinfo) (key-from-tableinfo-data tableinfo data) (if (string?  (data columnname))   #{ (data columnname)} (data columnname) ))]
     (println [table key toadd] )
     (if (get-item aws-credential table key)
@@ -77,7 +72,26 @@
 
 
 
-(defn- add-to-done-today [columnname thingsdone date]
+
+
+
+;; actaul functionality
+
+(defn- view-day
+  "Just show a days info"
+  [view-date]
+  (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" view-date
+                    (sort
+                     (lazy-seq
+                      ((get-item aws-credential "donetoday" [(config :user) (stringdate-to-integer view-date)])
+                       "done")))))
+
+
+
+
+(defn- add-to-done-today
+  "Add an item to today's list."
+  [columnname thingsdone date]
   (when-not (first thingsdone)
     (do (println "Things done required when not using --view")
         (System/exit 0)))
@@ -88,8 +102,9 @@
 
 
 
-(defn -main  [& args]
-  "Record and view done things"
+(defn -main
+  "Record and view done things."
+  [& args]
   (let [[options thingsdone banner] (cli args
                                          ["-v" "--view" "View things done" :flag true]
                                          ["-d" "--date" "The date you wish to view" :default (display-lastmonth)]
