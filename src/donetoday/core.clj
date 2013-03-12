@@ -54,18 +54,37 @@
                        "done")))))
 
 
-(defn- add-to-done-today [thingsdone date]
+
+(def tableinfo {:table "donetoday"   :type :hashandrange, :hash "user", :range "date" })
+
+(defn key-from-tableinfo-data [tableinfo data]
+  (if (= (:type tableinfo) :hash)
+    [(data (:hash tableinfo))]
+    (if (= (:type tableinfo) :hashandrange)
+      [(data (:hash tableinfo)), (data (:range tableinfo))])))
+
+
+
+(defn add-or-update-column [tableinfo data columnname]
+  (let [[table key toadd] (list (:table tableinfo) (key-from-tableinfo-data tableinfo data) (if (string?  (data columnname))   #{ (data columnname)} (data columnname) ))]
+    (println [table key toadd] )
+    (if (get-item aws-credential table key)
+       (update-item  aws-credential table key {columnname [:add toadd ]}  :return-values "ALL_NEW")
+       (put-item aws-credential table data  :return-values "ALL_NEW"))
+     ))
+
+
+
+
+
+(defn- add-to-done-today [columnname thingsdone date]
   (when-not (first thingsdone)
     (do (println "Things done required when not using --view")
         (System/exit 0)))
   (pprint/cl-format true "I did this today: ~%~%~{* ~A~%~}~%"
                     (sort
                      (lazy-seq
-                      ((if (get-item aws-credential "donetoday" [(config :user) date])
-                         (update-item  aws-credential "donetoday"  [(config :user) date] {"done" [:add (set thingsdone) ]}  :return-values "ALL_NEW")
-                         (put-item aws-credential "donetoday" {"user" (config :user) "date" date "done" thingsdone} :return-values "ALL_NEW"))
-                       "done")))))
-
+                      ((add-or-update-column tableinfo  {"user" (config :user) "date" date "done" thingsdone} columnname) columnname)))))
 
 
 
@@ -74,7 +93,9 @@
   (let [[options thingsdone banner] (cli args
                                          ["-v" "--view" "View things done" :flag true]
                                          ["-d" "--date" "The date you wish to view" :default (display-lastmonth)]
+                                         ["-t" "--type" "Type of thing being added" :default "done" ]
                                          ["-h" "--help" "Show help" :default false :flag true]
+                                         
                                          )]
     (when (or (:help options) (not (or  (:view options) (first thingsdone))))
       (println banner)
@@ -82,7 +103,7 @@
     (if (:view options)
       (view-day (:date options)))
     (if (first thingsdone)
-      (add-to-done-today  thingsdone (or
+      (add-to-done-today  (:type options) thingsdone (or
                                       (if (:view options)
                                         (stringdate-to-integer (:date options)))
                                       (dyndb-today)  )))))
