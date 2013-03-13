@@ -1,7 +1,11 @@
 (ns donetoday.core-test
-  (:use clojure.test
-        donetoday.core))
+  (:use midje.sweet)               ;; <<==
+  (:require [donetoday.core :as core])
+  (:require [clj-time.core :as time])
+  )
 
-(deftest a-test
-  (testing "FIXME, I fail."
-    (is (= 0 1))))
+
+(fact "truncate-time gives you a local time with day level resolution"
+      (core/truncate-time  (time/date-time 1998 4 25 3 27 45) ) => (time/to-time-zone (time/date-time 1998 4 25)  (time/default-time-zone))
+      (core/truncate-time  (time/local-date-time 1998 4 25 3 27 45) ) => (time/to-time-zone (time/date-time 1998 4 25) (time/default-time-zone))
+      )

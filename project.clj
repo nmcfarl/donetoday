@@ -10,5 +10,5 @@
                  [org.clojure/tools.cli "0.2.2"]
                  ]
   :plugins [[lein-ring "0.4.5"]]
-
+  :profiles {:dev {:dependencies [[midje "1.5.0"]]}}
   )
