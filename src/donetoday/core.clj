@@ -62,7 +62,6 @@
   "Add an a item to column in DynamoDB"
   [tableinfo data columnname]
   (let [[table key toadd] (list (:table tableinfo) (key-from-tableinfo-data tableinfo data) (if (string?  (data columnname))   #{ (data columnname)} (data columnname) ))]
-    (println [table key toadd] )
     (if (get-item aws-credential table key)
        (update-item  aws-credential table key {columnname [:add toadd ]}  :return-values "ALL_NEW")
        (put-item aws-credential table data  :return-values "ALL_NEW"))
@@ -79,14 +78,14 @@
 
 (defn- view-day
   "Just show a days info"
-  [view-date]
+  [columnname view-date]
   (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" view-date
                     (sort
                      (lazy-seq
-                      ((get-item aws-credential "donetoday" [(config :user) (stringdate-to-integer view-date)])
-                       "done")))))
+                      ((get-item aws-credential  (:table tableinfo) [(config :user) (stringdate-to-integer view-date)])
+                       columnname)))))
 
-
+                                     
 
 
 (defn- add-to-done-today
@@ -107,19 +106,20 @@
   [& args]
   (let [[options thingsdone banner] (cli args
                                          ["-v" "--view" "View things done" :flag true]
-                                         ["-d" "--date" "The date you wish to view" :default (display-lastmonth)]
+                                         ["-d" "--date" (str "The date you wish to view eg: " (display-lastmonth))]
                                          ["-t" "--type" "Type of thing being added" :default "done" ]
-                                         ["-h" "--help" "Show help" :default false :flag true]
-                                         
+                                         ["-h" "--help" "Show help" :default false :flag true]                                         
                                          )]
     (when (or (:help options) (not (or  (:view options) (first thingsdone))))
       (println banner)
       (System/exit 0))
     (if (:view options)
-      (view-day (:date options)))
+      (view-day (:type options) (if (:date options)
+                                    (:date options)
+                                    (display-lastmonth))))
     (if (first thingsdone)
       (add-to-done-today  (:type options) thingsdone (or
-                                      (if (:view options)
+                                      (if  (:date options)
                                         (stringdate-to-integer (:date options)))
                                       (dyndb-today)  )))))
   
