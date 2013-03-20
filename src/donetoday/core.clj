@@ -13,6 +13,8 @@
 (def dynamodb-formatter (formatter "yyyyMMdd"))
 (def display-formatter (formatter "yyyy-MM-dd"))
 (def tableinfo {:table "donetoday"   :type :hashandrange, :hash "user", :range "date" })
+(defn dynamodb2display [date]  (unparse display-formatter (parse  dynamodb-formatter (str date))))
+
 
 ;;  Read the config file
 (defn- user-prop
@@ -39,10 +41,14 @@
                [time/year time/month time/day]))
    (time/default-time-zone)))
 
-(defn- dyndb-today []  (Integer. (unparse dynamodb-formatter (truncate-time (local-now)))))
-(defn- display-lastmonth [] (unparse display-formatter
+(defn- today []  (unparse dynamodb-formatter (truncate-time (local-now))))
+(defn- lastmonth [] (unparse display-formatter
                                      (truncate-time
                                       (time/minus (local-now) (time/months 1)))))
+(defn- yesterday [] (unparse display-formatter
+                                     (truncate-time
+                                      (time/minus (local-now) (time/days 1)))))
+
 (defn- stringdate-to-integer [date] (if date (Integer. (apply str (filter #(Character/isDigit %) date))) nil))
 
 
@@ -69,9 +75,20 @@
 
 
 
+(defn- dt-get-column
+  "internal colum"
+  [columnname view-date]
+  (sort
+   (lazy-seq
+    ((get-item aws-credential  (:table tableinfo) [(config :user) view-date])
+     columnname))))
 
-
-
+(defn- dt-add-or-update-column
+  "internal update"
+  [columnname thingsdone date]
+  (sort
+   (lazy-seq
+    ((add-or-update-column tableinfo  {"user" (config :user) "date" date columnname thingsdone} columnname) columnname))))
 
 
 ;; actaul functionality
@@ -79,14 +96,18 @@
 (defn- view-day
   "Just show a days info"
   [columnname view-date]
-  (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" view-date
-                    (sort
-                     (lazy-seq
-                      ((get-item aws-credential  (:table tableinfo) [(config :user) (stringdate-to-integer view-date)])
-                       columnname)))))
+  (pprint/cl-format true "I did this ~A: ~%~%~{* ~A~%~}~%" (dynamodb2display view-date) (dt-get-column columnname view-date)))
 
+(defn- get-date-from-options
+  "figure out the date from the options"
+  [options default]
+  (stringdate-to-integer
+   (if (:yesterday options)
+     (yesterday)
+     (if (:date options)
+       (:date options)
+       default))))
                                      
-
 
 (defn- add-to-done-today
   "Add an item to today's list."
@@ -94,10 +115,7 @@
   (when-not (first thingsdone)
     (do (println "Things done required when not using --view")
         (System/exit 0)))
-  (pprint/cl-format true "I did this today: ~%~%~{* ~A~%~}~%"
-                    (sort
-                     (lazy-seq
-                      ((add-or-update-column tableinfo  {"user" (config :user) "date" date columnname thingsdone} columnname) columnname)))))
+  (pprint/cl-format true "I did this today: ~%~%~{* ~A~%~}~%" (dt-add-or-update-column    columnname thingsdone date)))
 
 
 
@@ -105,8 +123,10 @@
   "Record and view done things."
   [& args]
   (let [[options thingsdone banner] (cli args
+                                         
                                          ["-v" "--view" "View things done" :flag true]
-                                         ["-d" "--date" (str "The date you wish to view eg: " (display-lastmonth))]
+                                         ["-d" "--date" (str "The date you wish to view eg: " (lastmonth))]
+                                         ["-y" "--yesterday" "change the date to yesterday" :flag true]
                                          ["-t" "--type" "Type of thing being added" :default "done" ]
                                          ["-h" "--help" "Show help" :default false :flag true]                                         
                                          )]
@@ -114,14 +134,9 @@
       (println banner)
       (System/exit 0))
     (if (:view options)
-      (view-day (:type options) (if (:date options)
-                                    (:date options)
-                                    (display-lastmonth))))
+      (view-day (:type options) (get-date-from-options options (lastmonth))))
     (if (first thingsdone)
-      (add-to-done-today  (:type options) thingsdone (or
-                                      (if  (:date options)
-                                        (stringdate-to-integer (:date options)))
-                                      (dyndb-today)  )))))
+      (add-to-done-today  (:type options) thingsdone (get-date-from-options options  (today))))))
   
 
 
